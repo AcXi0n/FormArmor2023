@@ -1,0 +1,57 @@
+{% extends 'layout.html.twig' %}
+{% block FormArmor_body %}
+	<h2>TABLEAU DES SESSIONS DE FORMATIONS</h2>
+	<table class="table">
+		<thead>
+			<tr> 
+				<th>Libell&eacute;</th>
+				<th>Niveau</th>
+				<th>Description</th>
+				<th>Nombres de places disponibles</th>
+				<th>Date de début</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for uneSession in lesSessions %}
+				<tr {# si le nombre de passages dans la boucle est pair #} {% if loop.index is even %} class="success" {% else %} class="info" {% endif %}>
+					<td>{{uneSession.libelle}}</td>
+					<td>{{uneSession.niveau}}</td>
+					<td>{{uneSession.description}}</td>
+                    <td>{{uneSession.nbPlaces - uneSession.nbInscrits}}</td>
+					<td>{{uneSession.dateDebut|date('Y-m-d')}}</td>
+					<td>
+						{% set nombreSessionPresente = 0 %}
+						{% for uneSessionPos in lesSessionPossibles %}
+							{% if uneSession.id == uneSessionPos.id %}
+								{% set nombreSessionPresente = nombreSessionPresente + 1 %}	
+							{% endif %}
+						{% endfor %}
+					
+						{% if nombreSessionPresente > 0 %}  {# si session est possible #}
+							{% set nombreSessionPresenteIndispo = 0 %}
+							{% for uneSessionPasPos in lesSessionsPasInscrivables %}
+								{% if uneSession.id == uneSessionPasPos.id %}
+									{% set nombreSessionPresenteIndispo = nombreSessionPresenteIndispo + 1 %}	
+								{% endif %}
+							{% endfor %}
+
+							{% if nombreSessionPresenteIndispo == 0 %}  {# si session est pas dans ds session déjà faite #}
+								<a class="btn btn-success" href="{{ path('inscriptionSessionClient', {'id' :uneSession.id }) }}" role="button">S'inscrire</a> 
+							{% endif %}
+						{% endif %}								
+					</td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	{# AFFICHER UN TABLEAU {{ dump(lesSessionPossibles)}} #}
+
+	<script>
+		$(function() {
+			$('#menu3').attr('class', 'active');
+		});
+	</script>
+	
+{% endblock %}

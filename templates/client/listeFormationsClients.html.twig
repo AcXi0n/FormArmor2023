@@ -1,0 +1,36 @@
+{% extends 'layout.html.twig' %}
+{% block FormArmor_body %}
+
+	<h2>TABLEAU DES SESSIONS DE FORMATIONS</h2>
+	<table class="table">
+		<thead>
+			<tr>
+				<th>Libell&eacute;</th>
+				<th>Niveau</th>
+				<th>Description</th>
+				<th>Date d'inscription</th>
+				<th>Etat</th>
+				<th></th>
+			</tr>
+		</thead>
+		<tbody>
+			{% for uneSession in lesSessions %}
+				<tr {# si le nombre de passages dans la boucle est pair #} {% if loop.index is even %} class="success" {% else %} class="info" {% endif %}>
+					<td>{{uneSession.libelle}}</td>
+					<td>{{uneSession.niveau}}</td>
+                    <td>{{uneSession.description}}</td>
+					<td>{{uneSession.dateInscription|date('Y-m-d')}}</td>
+                    <td>{{uneSession.etat}}</td>
+					<td><a class="btn btn-danger" href="{{ path('desinscriptionSessionClient', {'id' :uneSession.idInscription }) }}" role="button">Se désinscrire</a> </td>
+				</tr>
+			{% endfor %}
+		</tbody>
+	</table>
+
+	<script>
+		$(function() {
+			$('#menu3').attr('class', 'active');
+		});
+	</script>
+	
+{% endblock %}
