@@ -19,10 +19,13 @@ use Doctrine\Persistence\ManagerRegistry;
  
 class RegisterController extends AbstractController
 {
-    #[Route('/register', name: 'register')]
+    #[Route('/admin/register', name: 'register')]
     public function register(Request $request, UserPasswordHasherInterface $passEncoder, ManagerRegistry $doctrine)
     {
-    $form=$this->createFormBuilder()
+        // On autorise l'acces uniquement à l'administrateur
+		$this->denyAccessUnlessGranted('ROLE_ADMIN');
+        
+        $form=$this->createFormBuilder()
         ->add('username')
         ->add('password', RepeatedType::class, [
             'type'=>PasswordType::class,

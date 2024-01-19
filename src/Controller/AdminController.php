@@ -15,6 +15,7 @@ use App\Entity\Statut;
 use App\Entity\Formation;
 use App\Entity\SessionFormation;
 use App\Entity\PlanFormation;
+use App\Entity\Inscription;
 
 use App\Form\ClientType;
 use App\Form\ClientCompletType;
@@ -60,6 +61,48 @@ class AdminController extends AbstractController
 			return $this->redirectToRoute('login');
 		}
     }
+	
+	#[Route('/admin/changerEtatSession/{id}/{newEtat}', name: 'adminChangerEtatSession')]
+	// Passage de l'etat d'une session de provisoire à définif
+	public function adminChangerEtatSession(ManagerRegistry $doctrine, $id, $newEtat)
+	{
+		// On autorise l'acces uniquement à l'administrateur
+		$this->denyAccessUnlessGranted('ROLE_ADMIN');
+
+		$em = $doctrine->getManager();
+		$repSession = $em->getRepository(SessionFormation::class);
+		$repInscription = $em->getRepository(Inscription::class);
+		$repPlanInscription = $em->getRepository(PlanFormation::class);
+		
+		$inscriptionsAPAsserDefinitive = $repInscription->getInscriptionParSession($id);
+
+		if($newEtat == "valider") // si on veut valider la session
+		{
+			$laSession = $repSession->getSessionById($id);
+			$laSession->setClose(true); // ferme session
+			foreach($inscriptionsAPAsserDefinitive as $uneInscription)
+			{
+				$uneInscription->setEtat("Définitive");
+				$uneInscription->setMessage("Votre inscription a été validé");
+				$planFormationClient = $repPlanInscription->getPlanByIdFormationIdClient($laSession->getFormation()->getId(), $uneInscription->getClient()->getId());
+				$planFormationClient->setEffectue(true); // modif plan de formation du client
+			}
+			
+			$em->flush(); // valide les suppression
+		}
+
+		if($newEtat == "annuler") // si on veut annuler la session
+		{			
+			foreach($inscriptionsAPAsserDefinitive as $uneInscription)
+			{
+				$em->remove($uneInscription); // supprime l'inscription
+			}
+			$em->flush(); // valide les suppression
+			$repSession->suppSession($id); // supprime la session
+		}
+		
+		return $this->redirectToRoute('adminSessionListe');
+	}
 
 	#[Route('/admin/statut/liste', name: 'adminStatutListe')]
 	// Gestion des statuts
@@ -190,7 +233,7 @@ class AdminController extends AbstractController
 		$this->denyAccessUnlessGranted('ROLE_ADMIN');
 
 		// Récupération du client d'identifiant $id
-		$this->doctrine=$doctrine;
+		//$this->doctrine=$doctrine;
 		$rep = $doctrine->getRepository(Client::class);
 		$client = $rep->find($id);
 		
@@ -230,7 +273,7 @@ class AdminController extends AbstractController
 		$this->denyAccessUnlessGranted('ROLE_ADMIN');
 		
 		// Récupération du client d'identifiant $id
-		$this->doctrine=$doctrine;
+		//$this->doctrine=$doctrine;
 		$rep = $doctrine->getRepository(Client::class);
 		$client = $rep->find($id);
 		
@@ -545,4 +588,47 @@ class AdminController extends AbstractController
 		// Si formulaire pas encore soumis ou pas valide (affichage du formulaire)
 		return $this->render('Admin/formPlan.html.twig', array('form' => $form->createView(), 'action' => 'suppression'));
     }
+
+	#[Route('/admin/plan/ajout', name: 'adminPlanAjout')]
+	public function ajoutPlanFormation(Request $request, ManagerRegistry $doctrine) // Affichage du formulaire d'ajout d'un plan de formation
+    {
+        // On autorise l'acces uniquement à l'administrateur
+		$this->denyAccessUnlessGranted('ROLE_ADMIN');	
+		
+		$em=$doctrine->getManager();
+		$rep = $em->getRepository(PlanFormation::class);
+		
+		// Création du formulaire à partir du plan de formation récupéré
+		$form = $this->createForm(PlanFormationType::class);
+		
+		// Ajout dans la bdd si method POST ou affichage du formulaire dans le cas contraire
+		if ($request->getMethod() == 'POST')
+		{
+			$form->handleRequest($request); // permet de récupérer les valeurs des champs dans les inputs du formulaire.
+			if ($form->isValid())
+			{
+				$data = $form->getData();
+				$planFormation = new PlanFormation();
+				$planFormation->setFormation($data['formation']);
+				$planFormation->setClient($data['client']);
+				$planFormation->setEffectue($data['effectue']);
+
+				$em->persist($planFormation);
+				$em->flush();
+				
+				/// Réaffichage de la liste des plans de formation
+				$lesPlans = $rep->listePlans();
+				$lesPlansPagines = $paginator->paginate(
+					$lesPlans, // Requête contenant les données à paginer (ici nos plans de formation)
+					$request->query->getInt('page', 1), // Numéro de la page en cours, passé dans l'URL, 1 si aucune page
+					4 // Nombre de résultats par page
+				);
+				return $this->render('Admin/plan.html.twig', Array('lesPlans' => $lesPlansPagines));
+			}
+		}
+		// Si formulaire pas encore soumis ou pas valide (affichage du formulaire)
+		return $this->render('Admin/formPlan.html.twig', array('form' => $form->createView(), 'action' => 'création'));
+
+    }
+	
 }

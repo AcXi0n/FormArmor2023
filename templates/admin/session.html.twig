@@ -9,6 +9,7 @@
 			<th>Date debut</th>
 			<th>Nombre de places</th>
 			<th>Nombre d'inscrits</th>
+			<th>Etat</th>
 			<th>Close</th>
 			<th colspan="2">Option</th>
 		</tr>
@@ -21,9 +22,14 @@
 					<td>{{session.dateDebut|date('Y-m-d')}}</td>
 					<td>{{session.nbPlaces}}</td>
 					<td>{{session.nbInscrits}}</td>
-					{% if (session.close == 1) %}
+					{% if (session.close == 1) %}						
+						<td>Définitive</td>
 						<td>Oui</td>
-					{% else %}
+					{% else %}					
+						<td>
+							<a class="btn btn-success" href="{{ path('adminChangerEtatSession', {'id' :session.id, 'newEtat':'valider' }) }}" role="button">Valider</a>
+							<a class="btn btn-danger" href="{{ path('adminChangerEtatSession', {'id' :session.id, 'newEtat':'annuler' }) }}" role="button">Annuler</a>
+						</td>
 						<td>Non</td>
 					{% endif %}
 					<td><a href="{{ path('adminSessionModif', {'id': session.id}) }}">Modifier</a></td>

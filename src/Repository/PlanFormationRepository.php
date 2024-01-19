@@ -34,13 +34,26 @@ class PlanFormationRepository extends ServiceEntityRepository
 		// On gère ensuite la pagination grace au service KNPaginator
 		return $query->getResult();
 	}
+
 	public function suppPlan($id) // Suppression du plan de formation d'identifiant $id
 	{
 		$qb = $this->createQueryBuilder('p');
 		$query = $qb->delete('App\Entity\PlanFormation', 'p')
-		  ->where('p.id = :id')
-		  ->setParameter('id', $id);
+					->where('p.id = :id')
+					->setParameter('id', $id);
 		
 		return $qb->getQuery()->getResult();
+	}
+
+	public function getPlanByIdFormationIdClient($idFormation, $idClient) // récup le pland de formation du client x avec la formation y
+	{
+		$qb = $this->createQueryBuilder('p');
+		$query = $qb->join("p.formation", "f")
+					->join("p.client", "c")
+					->where('f.id = :idFormation')					
+					->andWhere('c.id = :idClient')		 
+					->setParameter('idFormation', $idFormation) 			
+					->setParameter('idClient', $idClient);
+		return $qb->getQuery()->getResult()[0];	
 	}
 }

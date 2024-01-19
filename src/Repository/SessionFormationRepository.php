@@ -22,6 +22,7 @@ class SessionFormationRepository extends ServiceEntityRepository
     {
         parent::__construct($registry, SessionFormation::class);
     }
+	
 
 	public function getSessionsFormationClient()
 	{
@@ -76,5 +77,14 @@ class SessionFormationRepository extends ServiceEntityRepository
 		  ->setParameter('id', $id);
 		
 		return $qb->getQuery()->getResult();
+	}
+
+	public function getSessionById($id)
+	{
+		$qb = $this->createQueryBuilder('s');
+		$query = $qb->where('s.id = :id')
+		  ->setParameter('id', $id);
+		
+		return $qb->getQuery()->getResult()[0];	
 	}
 }

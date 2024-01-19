@@ -23,6 +23,18 @@ class InscriptionRepository extends ServiceEntityRepository
         parent::__construct($registry, Inscription::class);
     }
 
+	public function getInscriptionParSession($idSession) // pour récup les inscriptions à une session
+	{
+		$queryBuilder = $this->createQueryBuilder('i');
+
+		return $queryBuilder->join('i.sessionformation', 'sf') // Jointure avec session_formation
+									->where('sf.id = :IdSession')
+									->setParameter('IdSession', $idSession)
+									->getQuery()
+									->getResult();
+	}
+
+
     public function getSessionFormationRealiseClient($idClient)
 	{
 		$queryBuilder = $this->createQueryBuilder('i');
